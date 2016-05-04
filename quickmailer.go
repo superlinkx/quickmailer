@@ -8,35 +8,49 @@ import (
 )
 
 func main() {
-	server := flag.String("server", "", "smtp server without port to use")
-	port := flag.String("port", "587", "smtp port to use")
-	passwd := flag.String("passwd", "", "password for smtp auth")
-	from := flag.String("from", "", "email to send from")
-	to := flag.String("to", "", "email to send to")
-	subject := flag.String("subject", "Your Files", "subject line")
-	body := flag.String("body", "See attached", "some body text")
-	attachFile := flag.String("attach", "", "single file to attach")
-	attachDir := flag.String("attachDir", "", "directory to attach files from")
+	var (
+		server     string
+		port       string
+		passwd     string
+		from       string
+		to         string
+		subject    string
+		body       string
+		attachFile string
+		attachDir  string
+	)
 
-	if (*server == "") || (*port == "") || (*passwd == "") || (*from == "") || (*to == "") {
+	flag.StringVar(&server, "server", "", "smtp server without port to use")
+	flag.StringVar(&port, "port", "587", "smtp port to use")
+	flag.StringVar(&passwd, "passwd", "", "password for smtp auth")
+	flag.StringVar(&from, "from", "", "email to send from")
+	flag.StringVar(&to, "to", "", "email to send to")
+	flag.StringVar(&subject, "subject", "Your Files", "subject line")
+	flag.StringVar(&body, "body", "See attached", "some body text")
+	flag.StringVar(&attachFile, "attach", "", "single file to attach")
+	flag.StringVar(&attachDir, "attachDir", "", "directory to attach files from")
+
+	flag.Parse()
+
+	if (server == "") || (port == "") || (passwd == "") || (from == "") || (to == "") {
 		panic("Required flags: -server, -passwd, -port, -from, -to")
 	}
 
-	sendserver := *server + ":" + *port
+	sendserver := server + ":" + port
 
 	e := email.NewEmail()
-	e.From = "<" + *from + ">"
-	e.To = []string{*to}
-	e.Subject = *subject
-	e.Text = []byte(*body)
+	e.From = "<" + from + ">"
+	e.To = []string{to}
+	e.Subject = subject
+	e.Text = []byte(body)
 
-	if *attachFile != "" {
-		e.AttachFile(*attachFile)
+	if attachFile != "" {
+		e.AttachFile(attachFile)
 	}
 
-	if *attachDir != "" {
+	if attachDir != "" {
 
 	}
 
-	e.Send(sendserver, smtp.PlainAuth("", *from, *passwd, *server))
+	e.Send(sendserver, smtp.PlainAuth("", from, passwd, server))
 }
