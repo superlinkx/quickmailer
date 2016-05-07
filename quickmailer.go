@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/smtp"
+	"net/textproto"
 	"path/filepath"
 
 	"github.com/jordan-wright/email"
@@ -14,6 +15,7 @@ type emailParams struct {
 	port       string
 	passwd     string
 	from       string
+	fromname   string
 	to         string
 	subject    string
 	body       string
@@ -24,24 +26,42 @@ type emailParams struct {
 func main() {
 	settings := getArgs()
 
-	e := email.NewEmail()
-	e.From = "<" + settings.from + ">"
-	e.To = []string{settings.to}
-	e.Subject = settings.subject
-	e.Text = []byte(settings.body)
+	fromline := "<" + settings.from + ">"
+
+	if settings.fromname != "" {
+		fromline = settings.fromname + " " + fromline
+	}
+
+	e := &email.Email{
+		To:      []string{settings.to},
+		From:    fromline,
+		Subject: settings.subject,
+		Text:    []byte(settings.body),
+		Headers: textproto.MIMEHeader{},
+	}
 
 	if settings.attachFile != "" {
-		e.AttachFile(settings.attachFile)
+		_, err := e.AttachFile(settings.attachFile)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if settings.attachDir != "" {
 		files, _ := filepath.Glob(settings.attachDir + "/*")
 		for _, elem := range files {
-			e.AttachFile(elem)
+			_, err := e.AttachFile(elem)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 
-	e.Send(settings.sendserver, smtp.PlainAuth("", settings.from, settings.passwd, settings.server))
+	err := e.Send(settings.sendserver, smtp.PlainAuth("", settings.from, settings.passwd, settings.server))
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getArgs() emailParams {
@@ -56,6 +76,7 @@ func getArgs() emailParams {
 	flag.StringVar(&params.body, "body", "See attached", "some body text")
 	flag.StringVar(&params.attachFile, "attach", "", "single file to attach")
 	flag.StringVar(&params.attachDir, "attachDir", "", "directory to attach files from")
+	flag.StringVar(&params.fromname, "fromName", "", "name to send email as")
 
 	flag.Parse()
 
