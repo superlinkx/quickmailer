@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"net/smtp"
 	"net/textproto"
 	"path/filepath"
@@ -43,7 +44,7 @@ func main() {
 	if settings.attachFile != "" {
 		_, err := e.AttachFile(settings.attachFile)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -52,7 +53,7 @@ func main() {
 		for _, elem := range files {
 			_, err := e.AttachFile(elem)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		}
 	}
@@ -60,7 +61,7 @@ func main() {
 	err := e.Send(settings.sendserver, smtp.PlainAuth("", settings.from, settings.passwd, settings.server))
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -81,7 +82,7 @@ func getArgs() emailParams {
 	flag.Parse()
 
 	if (params.server == "") || (params.port == "") || (params.passwd == "") || (params.from == "") || (params.to == "") {
-		panic("Required flags: -server, -passwd, -port, -from, -to")
+		log.Fatal("Required flags: -server, -passwd, -port, -from, -to")
 	}
 
 	params.sendserver = params.server + ":" + params.port
